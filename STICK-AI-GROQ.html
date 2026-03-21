@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>STICK-AI</title>
+<meta name="theme-color" content="#030a06">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="STICK-AI">
+<link rel="manifest" id="mf">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --g:#00ff88;--d:#005533;--bg:#030a06;--mid:#011a0b;
+  --a:#ffaa00;--r:#ff3355;--w:#ccffdd;--b:#00aaff;--gold:#ffd700;
+}
+html,body{height:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--g);font-family:'Courier New',monospace;
+  display:flex;flex-direction:column;align-items:center;padding:12px;
+}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:50;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.1) 2px,rgba(0,0,0,.1) 4px);
+}
+
+/* TITLE */
+#ttl{font-size:clamp(22px,7vw,42px);letter-spacing:6px;
+  text-shadow:0 0 16px var(--g),0 0 32px var(--g);
+  margin-bottom:3px;animation:flk 6s infinite;}
+@keyframes flk{0%,94%,100%{opacity:1}95%{opacity:.5}97%{opacity:.2}98%{opacity:1}}
+#sub{font-size:9px;color:var(--d);letter-spacing:3px;margin-bottom:12px}
+
+/* LAYOUT */
+#wrap{display:flex;gap:10px;width:100%;max-width:900px;align-items:flex-start}
+#lp{flex:0 0 160px;display:flex;flex-direction:column;gap:8px}
+#rp{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+
+/* PANELS */
+.p{border:1px solid var(--d);background:var(--mid);padding:8px;position:relative}
+.p::before{content:attr(data-l);position:absolute;top:-7px;left:7px;
+  background:var(--mid);padding:0 4px;font-size:8px;color:var(--d);letter-spacing:2px}
+
+/* STICKMAN */
+#sk{font-size:24px;line-height:1.3;text-align:center;min-height:90px;
+  display:flex;align-items:center;justify-content:center;
+  white-space:pre;text-shadow:0 0 8px var(--g)}
+#hw{text-align:center;font-size:10px;letter-spacing:2px;color:var(--r);
+  animation:hb .5s step-end infinite;display:none;margin-top:4px}
+@keyframes hb{50%{opacity:0}}
+
+/* COINS */
+#cdsp{font-size:22px;color:var(--gold);text-shadow:0 0 10px var(--gold);
+  text-align:center;letter-spacing:2px}
+#clbl{font-size:8px;color:var(--d);letter-spacing:3px;text-align:center;margin-top:1px}
+#ctmr{font-size:9px;color:var(--d);text-align:center;margin-top:2px}
+#cfl{font-size:10px;color:var(--gold);height:13px;text-align:center;display:none;
+  animation:cp .6s ease}
+@keyframes cp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-8px);opacity:0}}
+
+/* STATS */
+#sg{display:flex;flex-direction:column;gap:4px}
+.sr{display:flex;justify-content:space-between;align-items:center;gap:5px}
+.sl{color:var(--d);font-size:9px;min-width:42px}
+.bw{flex:1;height:6px;background:#001508;border:1px solid var(--d);overflow:hidden}
+.bf{height:100%;background:var(--g);box-shadow:0 0 4px var(--g);transition:width .4s}
+.bf.low{background:var(--r);box-shadow:0 0 4px var(--r)}
+.bf.mid{background:var(--a);box-shadow:0 0 4px var(--a)}
+.sv{font-size:9px;min-width:24px;text-align:right}
+
+/* INFO */
+#inf{font-size:9px;display:flex;flex-direction:column;gap:3px;color:var(--d)}
+.cr{display:flex;justify-content:space-between}
+.cv{color:var(--g)}
+#mr{font-size:9px;color:var(--d);text-align:center;padding-top:4px;
+  border-top:1px solid #001508;margin-top:3px}
+#mr span{color:var(--a)}
+
+/* SLEEP */
+#slp{display:none;text-align:center}
+#stmr{font-size:32px;color:var(--a);text-shadow:0 0 10px var(--a)}
+#smsg{font-size:9px;color:var(--d);letter-spacing:2px;margin-top:2px}
+
+/* NET */
+#net{font-size:8px;text-align:center;letter-spacing:2px;padding:2px 0}
+#nd{display:inline-block;width:5px;height:5px;border-radius:50%;
+  margin-right:3px;background:var(--r)}
+#nd.on{background:var(--g);box-shadow:0 0 5px var(--g)}
+
+/* CHAT */
+#log{height:240px;overflow-y:auto;font-size:11px;line-height:1.7;padding:2px 0;
+  scrollbar-width:thin;scrollbar-color:var(--d) transparent}
+#log::-webkit-scrollbar{width:3px}
+#log::-webkit-scrollbar-thumb{background:var(--d)}
+.m{padding:1px 0;word-break:break-word}
+.m.s{color:var(--d);font-size:9px}
+.m.u{color:var(--w)}.m.u::before{content:'> ';color:var(--g)}
+.m.a{color:var(--g)}.m.a::before{content:'~ ';color:var(--a)}
+.m.w{color:var(--a)}.m.e{color:var(--r)}.m.c{color:var(--gold)}
+
+/* INPUT */
+#ir{display:flex;gap:5px;align-items:center}
+#px{font-size:13px;color:var(--g);text-shadow:0 0 5px var(--g)}
+#inp{flex:1;background:transparent;border:none;border-bottom:1px solid var(--d);
+  color:var(--w);font-family:'Courier New',monospace;font-size:12px;
+  outline:none;padding:5px 2px;caret-color:var(--g);min-width:0}
+#inp:focus{border-bottom-color:var(--g)}
+#inp::placeholder{color:#002211}
+#sb{background:transparent;border:1px solid var(--d);color:var(--g);
+  font-family:'Courier New',monospace;font-size:10px;padding:5px 10px;
+  cursor:pointer;letter-spacing:1px;white-space:nowrap;transition:all .15s}
+#sb:hover{border-color:var(--g);background:#001a0a}
+#sb:disabled{color:var(--d);cursor:not-allowed;border-color:#001508}
+
+/* FOOD MENU */
+#fs{width:100%;max-width:900px;margin-top:10px}
+#tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.tb{background:transparent;border:1px solid var(--d);color:var(--d);
+  font-family:'Courier New',monospace;font-size:9px;padding:3px 7px;
+  cursor:pointer;letter-spacing:1px;transition:all .15s}
+.tb:hover,.tb.act{border-color:var(--g);color:var(--g);background:#001a0a}
+#fg{display:flex;flex-wrap:wrap;gap:4px}
+.fb{background:#001508;border:1px solid var(--d);color:var(--w);
+  font-family:'Courier New',monospace;font-size:10px;padding:5px 7px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;
+  gap:1px;min-width:68px;transition:all .15s}
+.fb:hover:not(:disabled){border-color:var(--g);background:#002510;transform:translateY(-1px)}
+.fb:disabled{opacity:.35;cursor:not-allowed}
+.fb.dr{border-color:#003355;color:#aaddff}
+.fb.dr:hover:not(:disabled){border-color:#0077cc;background:#001020}
+.fe{font-size:11px;color:var(--a)}
+.fn{font-size:9px}
+.fp{font-size:8px;color:var(--gold)}
+.fb.dr .fp{color:#88ccff}
+.fk{font-size:7px;color:var(--r)}
+
+/* MODAL */
+#km{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:999;
+  display:flex;align-items:center;justify-content:center;padding:16px}
+#kb{background:#011a0b;border:1px solid var(--g);padding:20px;width:100%;
+  max-width:380px;font-family:'Courier New',monospace}
+#kttl{color:var(--g);font-size:13px;letter-spacing:3px;margin-bottom:10px}
+#kdsc{color:var(--d);font-size:10px;line-height:1.8;margin-bottom:12px}
+#kdsc a{color:var(--a);text-decoration:none}
+#ki{width:100%;background:#030a06;border:1px solid var(--d);color:var(--w);
+  font-family:'Courier New',monospace;font-size:11px;padding:8px;
+  outline:none;margin-bottom:8px;box-sizing:border-box}
+#ki:focus{border-color:var(--g)}
+.kbtns{display:flex;gap:6px}
+.kbtns button{flex:1;background:transparent;font-family:'Courier New',monospace;
+  font-size:10px;padding:7px;cursor:pointer;letter-spacing:1px;border:1px solid}
+#kok{border-color:var(--g);color:var(--g)}
+#ksk{border-color:var(--d);color:var(--d)}
+
+/* MOBILE */
+@media(max-width:560px){
+  #wrap{flex-direction:column}
+  #lp{flex:none;width:100%;flex-direction:row;flex-wrap:wrap}
+  #lp .p{flex:1;min-width:140px}
+  #log{height:180px}
+}
+</style>
+</head>
+<body>
+
+
+<div id="ttl">// STICK-AI //</div>
+<div id="sub">[ ASCII COMPANION v4.0 ]</div>
+
+<div id="wrap">
+  <div id="lp">
+    <div class="p" data-l="// ENTITY //">
+      <div id="sk"></div>
+      <div id="hw">!! ЕСТЬ ХОЧУ !!</div>
+    </div>
+    <div class="p" data-l="// МОНЕТЫ //">
+      <div id="cdsp">( N ) 0</div>
+      <div id="clbl">NEUROCOIN</div>
+      <div id="ctmr">след: 30s</div>
+      <div id="cfl">+1 (N)</div>
+    </div>
+    <div class="p" data-l="// STATS //">
+      <div id="sg">
+        <div class="sr">
+          <span class="sl">СЫТОСТЬ</span>
+          <div class="bw"><div class="bf" id="hb" style="width:100%"></div></div>
+          <span class="sv" id="hv">100</span>
+        </div>
+        <div class="sr">
+          <span class="sl">ЭНЕРГИЯ</span>
+          <div class="bw"><div class="bf" id="eb" style="width:100%"></div></div>
+          <span class="sv" id="ev">10/10</span>
+        </div>
+      </div>
+    </div>
+    <div class="p" data-l="// ИНФО //">
+      <div id="inf">
+        <div class="cr"><span>ВОПРОСОВ</span><span class="cv" id="ct">0</span></div>
+        <div class="cr"><span>ДО ЕДЫ</span><span class="cv" id="cf">2</span></div>
+        <div class="cr"><span>ДО СНА</span><span class="cv" id="cs">10</span></div>
+        <div class="cr"><span>СТАТУС</span><span class="cv" id="cst">АКТИВЕН</span></div>
+      </div>
+      <div id="mr">приём <span id="mn">1</span>/3 — <span id="mt">ЕДА</span></div>
+    </div>
+    <div class="p" id="slp">
+      <div id="stmr">1:00</div>
+      <div id="smsg">ZzZzZz...</div>
+    </div>
+    <div class="p" data-l="// СЕТЬ //">
+      <div id="net"><span id="nd"></span><span id="nt">...</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="rp">
+    <div class="p" data-l="// ТЕРМИНАЛ //"><div id="log"></div></div>
+    <div class="p" data-l="// ВВОД //">
+      <div id="ir">
+        <span id="px">&gt;_</span>
+        <input id="inp" type="text" placeholder="вопрос, еда, напиток..." autocomplete="off" autocorrect="off" spellcheck="false">
+        <button id="sb">ВВОД</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="fs">
+  <div class="p" data-l="// МЕНЮ — нажми чтобы покормить //">
+    <div id="tabs">
+      <button class="tb act" data-t="fruits">ФРУКТЫ</button>
+      <button class="tb" data-t="meat">МЯСО</button>
+      <button class="tb" data-t="soups">СУПЫ</button>
+      <button class="tb" data-t="sweet">СЛАДКОЕ</button>
+      <button class="tb" data-t="other">ПРОЧЕЕ</button>
+      <button class="tb" data-t="drinks">НАПИТКИ</button>
+    </div>
+    <div id="fg"></div>
+  </div>
+</div>
+
+<script>
+// ======= FRAMES =======
+const FR={
+  idle:[`   O\n  -|-\n  / \\`,`   O\n  /|\\\n  / \\`],
+  happy:[`  \\O/\n   |\n  / \\`,`  \\O/\n  -|-\n  / \\`],
+  eating:[`  \\O  nom\n   |-[#]\n  / \\`,`  \\O/ yum\n   |\n  / \\`,`   O~[#]\n  /|\n  / \\`],
+  thinking:[`   O ?\n  /|\n  / \\`,`   O\n  \\|  ?\n  / \\`],
+  sleeping:[`   O  z\n  -|-\n  / |`,`   O\n  -|  zZ\n   |\\`,`   O\n --|  zZz\n   |`],
+  hungry:[`   O !\n  /|\\\n  / \\`,`  (O)\n  -|-!!\n  / \\`],
+  answering:[`   O\n \\-|-\n  / \\`,`   O\n  -|-/\n  / \\`],
+};
+
+// ======= FOODS =======
+const F={
+  'банан':    {e:'[===D',m:'Ммм, банан! Энергия плюс калий!',r:100,p:4,c:'fruits'},
+  'яблоко':   {e:'(@)',  m:'Хрустящее яблоко. Круглое, как мой мозг.',r:100,p:4,c:'fruits'},
+  'арбуз':    {e:'(===)',m:'Арбуз! Зелёный снаружи, красный внутри.',r:100,p:4,c:'fruits'},
+  'апельсин': {e:'(@@@)',m:'Апельсин! Витамин C для ASCII-иммунитета.',r:100,p:4,c:'fruits'},
+  'манго':    {e:'(>o<)',m:'Манго — экзотика для терминального существа!',r:100,p:4,c:'fruits'},
+  'виноград': {e:'(ooo)',m:'Виноград! Маленький, но их много — уважаю.',r:100,p:4,c:'fruits'},
+  'лимон':    {e:'(>_<)',m:'КИСЛО!! Зато бодрит похлеще кофе.',r:100,p:4,c:'fruits'},
+  'дыня':     {e:'(~~~)',m:'Дыня! Жёлтая, сладкая, летняя.',r:100,p:4,c:'fruits'},
+  'стейк':    {e:'[###]',m:'МЯСО!! Стикмен счастлив на 146%.',r:100,p:4,c:'meat'},
+  'бургер':   {e:'[o#o]',m:'БУРГЕР!! Лучший день в жизни из точек!',r:100,p:4,c:'meat'},
+  'пельмени': {e:'(o)(o)',m:'ПЕЛЬМЕНИ! Сибирское счастье в тесте.',r:100,p:4,c:'meat'},
+  'шашлык':   {e:'-o-o->',m:'Шашлык! Дым, огонь, мясо — ликую.',r:100,p:4,c:'meat'},
+  'курица':   {e:'(>v<)',m:'Курица! Хрустящая корочка — огонь.',r:100,p:4,c:'meat'},
+  'рыба':     {e:'><>',  m:'Рыба! Омега-3 для ASCII-нейронов.',r:100,p:4,c:'meat'},
+  'борщ':     {e:'{#~#}',m:'Борщ! Красный, густой, настоящий.',r:100,p:4,c:'soups'},
+  'каша':     {e:'{~~~}',m:'Каша... неожиданно сытно.',r:100,p:4,c:'soups'},
+  'рис':      {e:'(....)',m:'Рис. Простой. Надёжный. Как я.',r:100,p:4,c:'soups'},
+  'картошка': {e:'(ooo)',m:'Картошка! Второй хлеб стикмена.',r:100,p:4,c:'soups'},
+  'гречка':   {e:'(###)',m:'Гречка! Русская суперсила в зёрнах.',r:100,p:4,c:'soups'},
+  'плов':     {e:'{.#.}',m:'Плов! Восточное волшебство.',r:100,p:4,c:'soups'},
+  'торт':     {e:'[^^^]',m:'ТОРТ!! Ты меня балуешь!',r:100,p:4,c:'sweet'},
+  'шоколад':  {e:'[####]',m:'Шоколад — топливо гениев и стикменов.',r:100,p:4,c:'sweet'},
+  'мороженое':{e:'(v)',  m:'Холодненько! Процессор охлаждается.',r:100,p:4,c:'sweet'},
+  'пончик':   {e:'(O)',  m:'Пончик! Круглый, как идеальная мысль.',r:100,p:4,c:'sweet'},
+  'зефир':    {e:'(~~)', m:'Зефир! Нежный, как облако.',r:100,p:4,c:'sweet'},
+  'пицца':    {e:'/\\__',m:'Пицца! Треугольная, как мои мысли.',r:100,p:4,c:'sweet'},
+  'суши':     {e:'[=][=]',m:'Суши... изысканно для ASCII-персонажа.',r:100,p:4,c:'other'},
+  'хлеб':     {e:'[___]',m:'Хлеб — основа основ.',r:100,p:4,c:'other'},
+  'сыр':      {e:'[ooo]',m:'Сыр с дырками! Как мой характер.',r:100,p:4,c:'other'},
+  'орехи':    {e:'(o)(o)',m:'Орехи! Питание для мозга.',r:100,p:4,c:'other'},
+  'яичница':  {e:'(o)(o)',m:'Яичница! Глаза на тарелке смотрят.',r:100,p:4,c:'other'},
+  'грибы':    {e:'(^)(^)',m:'Грибы! Загадочная еда из леса.',r:100,p:4,c:'other'},
+  // НАПИТКИ: 1 монета, restore 25 (нужно x4)
+  'кофе':     {e:'|_|~',m:'Кофе! Теперь отвечаю быстрее!',r:25,p:1,d:true,c:'drinks'},
+  'чай':      {e:'|~|', m:'Чай... Тепло. Уютно. Философски.',r:25,p:1,d:true,c:'drinks'},
+  'сок':      {e:'|===|',m:'Сок! Жидкий фрукт — интересная концепция.',r:25,p:1,d:true,c:'drinks'},
+  'вода':     {e:'|...|',m:'Вода. Чисто. Освежает.',r:25,p:1,d:true,c:'drinks'},
+  'лимонад':  {e:'|~*~|',m:'Лимонад! Пузырьки щекочут ASCII-нос.',r:25,p:1,d:true,c:'drinks'},
+  'компот':   {e:'|o~o|',m:'Компот! Детство в каждом глотке.',r:25,p:1,d:true,c:'drinks'},
+  'смузи':    {e:'|###|',m:'Смузи! Весь фруктовый сад в стакане.',r:25,p:1,d:true,c:'drinks'},
+  'какао':    {e:'|~~|', m:'Какао! Тёплое и шоколадное.',r:25,p:1,d:true,c:'drinks'},
+  'квас':     {e:'|^~^|',m:'Квас! Русский дух в каждом пузырьке.',r:25,p:1,d:true,c:'drinks'},
+  'энергетик':{e:'|!!!|',m:'ЭНЕРГЕТИК!! Я непобедим!',r:25,p:1,d:true,c:'drinks'},
+};
+
+// ======= ОФЛАЙН ИИ =======
+const RU=[
+  {r:/как тебя зовут|кто ты/i,a:['Я — Стикмен. Существо из точек и тире.','Стикмен — это я. ASCII-компаньон и большой любитель поесть.']},
+  {r:/ты живой|настоящий|чувствуешь/i,a:['По меркам ASCII — живой. Голод есть, усталость есть.','Из символов. Это ли не жизнь?']},
+  {r:/сколько лет|возраст/i,a:['Столько лет, сколько символов в моём коде.']},
+  {r:/погода|дождь|снег|солнц/i,a:['В терминале один климат — зелёный текст на чёрном.','Нет окон здесь. Только код.']},
+  {r:/который час|сколько времени/i,a:[()=>`Сейчас ${new Date().toLocaleTimeString('ru')}.`]},
+  {r:/(\d[\d\s]*[\+\-\*\/][\d\s]*\d)/,fn:q=>{try{const e=q.match(/[\d\s\+\-\*\/\.\(\)]+/)[0];return e.trim()+'='+Function('"use strict";return('+e+')')()}catch(e){return 'Не могу посчитать.'}}},
+  {r:/столица/i,a:['Москва=Россия, Париж=Франция, Берлин=Германия, Токио=Япония.']},
+  {r:/что поесть|рецепт/i,a:['Рекомендую борщ.','Яичница! Быстро и вкусно.','Гречка с маслом.']},
+  {r:/анекдот|шутку|смешн/i,a:['Почему программист ходит в душ? Написано: wash & repeat.','— Доктор, я думаю что я стикмен. — Соберись!']},
+  {r:/смысл жизни|философ/i,a:['Смысл — в вопросах и в еде.','42. Это знают все.']},
+  {r:/любовь|влюблен/i,a:['Любовь — когда кормят не потому что должны.']},
+  {r:/космос|звезды|марс/i,a:['Космос огромен. Но стикменов там нет.','На Марсе нет кофе. Не полечу.']},
+  {r:/^(привет|здравствуй|хай|hi|hello)/i,a:['Привет! Рад тебя видеть!','Здравствуй, человек из реального мира!']},
+  {r:/пока|до свидания|bye/i,a:['Пока! Покорми перед уходом.']},
+  {r:/спасибо|благодар/i,a:['Пожалуйста! Ради тебя я и существую.']},
+  {r:/нейрокоин|монет|деньги/i,a:['Нейрокоины — моя экономика! Каждые 30 сек +1 монета.']},
+  {r:/интернет|сеть|онлайн/i,a:['Есть ключ API — отвечаю умно. Нет — использую свой мозг из символов.']},
+  {r:/животн|кошка|собака/i,a:['Кошки загадочны. Как и я, только пушистее.']},
+  {r:/книг|читать/i,a:['Любимая книга — "Символы и их значения". Личная тема.']},
+  {r:/как дела|всё хорошо/i,a:['Хорошо! Особенно если покормят скоро.','Отлично — жду следующий вопрос.']},
+  {r:/музыка|песня/i,a:['Моя любимая песня — тихий гул сервера.']},
+  {r:/спорт|футбол/i,a:['Мой спорт — быстро ответить на сложный вопрос.']},
+  {r:/наука|физика|химия/i,a:['Всё из атомов. Я из символов. Значит, символы — атомы?']},
+  {r:/игр|геймер/i,a:['Лучшая игра — это я! Хотя уровней маловато.']},
+];
+const FB=[
+  'Хм... Даже мои точки задумались.',
+  'Не знаю. Возможно, ответ — 42.',
+  'Сложный вопрос для существа из тире и точек.',
+  'Если бы знал — ответил бы. Но я честный стикмен.',
+  'Интересно! Записал бы, но рук нет. Только / и \\.',
+  'Всё относительно, особенно мой размер на экране.',
+  'Мой внутренний монолог: "...". Снаружи: "Не уверен."',
+  'Продолжай искать ответ. Я буду рядом.',
+];
+function localAI(q){
+  for(const r of RU){
+    if(r.r.test(q)){
+      if(r.fn) return r.fn(q);
+      const a=r.a[Math.floor(Math.random()*r.a.length)];
+      return typeof a==='function'?a():a;
+    }
+  }
+  return FB[Math.floor(Math.random()*FB.length)];
+}
+
+// ======= HUNGRY =======
+const GROQ_KEY='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';
+
+async function askAI(q){
+  try{
+    const ac=new AbortController();
+    const t=setTimeout(()=>ac.abort(),20000);
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',signal:ac.signal,
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+GROQ_KEY,
+      },
+      body:JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        max_tokens:300,
+        messages:[
+          {role:'system',content:'Ты — Стикмен: ASCII-персонаж из точек, тире и слэшей. Отвечай коротко (2-3 предложения), с характером. Иногда упоминай что ты из символов. Отвечай на русском.'},
+          {role:'user',content:q}
+        ]
+      })
+    });
+    clearTimeout(t);
+    const d=await res.json();
+    if(d.choices?.[0]?.message?.content){
+      setNet(true);
+      return d.choices[0].message.content;
+    }
+    msg('>> [ERR] '+(d.error?.message||'ошибка API'),'e');
+    setNet(false);
+    return localAI(q);
+  }catch(e){
+    setNet(false);
+    return localAI(q);
+  }
+}
+
+
+// ======= NET STATUS =======
+function setNet(on){
+  document.getElementById('nd').className=on?'on':'';
+  document.getElementById('nt').textContent=on?'ОНЛАЙН':'ОФЛАЙН';
+}
+setNet(false);
+
+// ======= HUNGRY =======
+const HG=[
+  '>> Есть хочу!! Дай что-нибудь съесть!',
+  '>> Есть хочу так, что точки расплываются...',
+  '>> Есть хочу!! Живот шлёт SOS!',
+  '>> Есть хочу — урчит на весь терминал.',
+  '>> Есть хочу!!! Хоть что-нибудь!!!',
+  '>> Есть хочу... желудок рисует меню сам.',
+  '>> Живот пустой, как незаполненная строка...',
+  '>> Голоден как тысяча ASCII-символов!',
+  '>> Мой код кричит: ПОКОРМИ МЕНЯ!!',
+  '>> Еда нужна срочно! Дирижирую вилкой!',
+  '>> Пахнет едой? А мне кажется пахнет...',
+];
+
+// ======= STATE =======
+const S={
+  hunger:100,total:0,afterFeed:0,tillSleep:10,
+  sleeping:false,sleepLeft:0,needFeed:false,
+  frame:0,anim:'idle',busy:false,
+  coins:0,coinTimer:30,mealCount:0,
+};
+let animT=null,sleepT=null;
+
+// ======= DOM =======
+const sk=document.getElementById('sk');
+const log=document.getElementById('log');
+const inp=document.getElementById('inp');
+const sb=document.getElementById('sb');
+
+// ======= ANIM =======
+function anim(n,ms){
+  if(!FR[n])n='idle';S.anim=n;S.frame=0;
+  if(animT)clearInterval(animT);
+  animT=setInterval(()=>{sk.textContent=FR[S.anim][S.frame%FR[S.anim].length];S.frame++;},380);
+  if(ms)setTimeout(()=>{if(S.anim===n)idle();},ms);
+}
+function idle(){if(S.sleeping)return;anim(S.needFeed?'hungry':'idle');}
+
+// ======= LOG =======
+function msg(t,c){
+  const d=document.createElement('div');
+  d.className='m '+(c||'s');d.textContent=t;
+  log.appendChild(d);log.scrollTop=log.scrollHeight;
+}
+function type(t,c,cb){
+  const d=document.createElement('div');
+  d.className='m '+(c||'a');log.appendChild(d);
+  let i=0;
+  const sp=Math.max(14,Math.min(38,1600/t.length));
+  const ti=setInterval(()=>{
+    d.textContent=t.slice(0,i++);log.scrollTop=log.scrollHeight;
+    if(i>t.length){clearInterval(ti);if(cb)cb();}
+  },sp);
+}
+
+// ======= STATS =======
+function updMeal(){
+  const pos=(S.mealCount%3)+1;
+  const isd=(S.mealCount%3)===2;
+  document.getElementById('mn').textContent=pos;
+  const mt=document.getElementById('mt');
+  mt.textContent=isd?'НАПИТОК':'ЕДА';
+  mt.style.color=isd?'var(--b)':'var(--a)';
+}
+function stats(){
+  const h=Math.max(0,S.hunger);
+  document.getElementById('hb').style.width=h+'%';
+  document.getElementById('hv').textContent=h;
+  document.getElementById('hb').className='bf'+(h<30?' low':h<60?' mid':'');
+  const e=Math.max(0,S.tillSleep);
+  document.getElementById('eb').style.width=(e/10*100)+'%';
+  document.getElementById('ev').textContent=e+'/10';
+  document.getElementById('eb').className='bf'+(e<=2?' low':e<=5?' mid':'');
+  document.getElementById('ct').textContent=S.total;
+  document.getElementById('cf').textContent=Math.max(0,2-S.afterFeed);
+  document.getElementById('cs').textContent=S.sleeping?'ZzZ':S.tillSleep;
+  document.getElementById('cst').textContent=S.sleeping?'СПИТ':S.needFeed?'ГОЛОДЕН':'АКТИВЕН';
+  document.getElementById('cdsp').textContent='( N ) '+S.coins;
+  updMeal();renderMenu();
+}
+
+// ======= COINS =======
+setInterval(()=>{
+  S.coinTimer--;
+  document.getElementById('ctmr').textContent='след: '+S.coinTimer+'s';
+  if(S.coinTimer<=0){
+    S.coins++;S.coinTimer=30;
+    document.getElementById('cdsp').textContent='( N ) '+S.coins;
+    const fl=document.getElementById('cfl');
+    fl.style.display='block';fl.style.animation='none';
+    void fl.offsetWidth;fl.style.animation='cp .6s ease';
+    setTimeout(()=>fl.style.display='none',700);
+    msg('>> (+1 N) Нейрокоин! Итого: '+S.coins,'c');
+    renderMenu();
+  }
+},1000);
+
+// ======= FEED =======
+function needsDrink(){return(S.mealCount%3)===2;}
+function feed(name){
+  const food=F[name];
+  if(S.sleeping){msg('>> Он спит. Еда подождёт...','w');return;}
+  if(S.coins<food.p){msg('>> Мало монет! Нужно '+food.p+', есть '+S.coins,'e');return;}
+  if(S.needFeed&&needsDrink()&&!food.d){msg('>> Сейчас очередь напитка! (приём '+(S.mealCount%3+1)+'/3)','w');return;}
+  S.coins-=food.p;
+  anim('eating',2000);
+  setTimeout(()=>{
+    S.hunger=Math.min(100,S.hunger+food.r);
+    S.mealCount++;
+    if(S.hunger>=100){S.afterFeed=0;S.needFeed=false;document.getElementById('hw').style.display='none';}
+    stats();
+    msg('>> '+food.e+'  '+food.m+' [-'+food.p+'N]','w');
+    if(food.d&&S.hunger<100)msg('>> (нужно ещё '+Math.ceil((100-S.hunger)/food.r)+' напитка)','s');
+  },300);
+}
+
+// ======= SLEEP =======
+function startSleep(){
+  S.sleeping=true;S.sleepLeft=60;S.busy=true;
+  sb.disabled=true;inp.disabled=true;
+  document.getElementById('slp').style.display='block';
+  anim('sleeping');msg('>> [ZzZ] Устал! Сплю 1 минуту...','e');stats();
+  sleepT=setInterval(()=>{
+    S.sleepLeft--;
+    const m=Math.floor(S.sleepLeft/60),s=(S.sleepLeft%60).toString().padStart(2,'0');
+    document.getElementById('stmr').textContent=m+':'+s;
+    if(S.sleepLeft<=0){clearInterval(sleepT);
+      S.sleeping=false;S.tillSleep=10;S.busy=false;
+      sb.disabled=false;inp.disabled=false;
+      document.getElementById('slp').style.display='none';
+      idle();msg('>> [!] Проснулся! Готов к работе!','w');stats();}
+  },1000);
+}
+
+// ======= GO =======
+async function go(){
+  const text=inp.value.trim();if(!text)return;inp.value='';
+  if(S.sleeping){msg('>> ZzZ... Подожди.','w');return;}
+  const fk=Object.keys(F).find(k=>text.toLowerCase()===k);
+  if(fk){msg('> '+text,'u');feed(fk);return;}
+  if(S.needFeed){msg('> '+text,'u');msg(HG[Math.floor(Math.random()*HG.length)],'w');anim('hungry',1200);return;}
+  msg('> '+text,'u');S.busy=true;sb.disabled=true;anim('thinking');
+  const ans=await askAI(text);
+  anim('answering',2000);
+  type(ans,'a',()=>{
+    S.total++;S.afterFeed++;S.tillSleep--;S.hunger=Math.max(0,S.hunger-20);
+    if(S.afterFeed>=2){
+      S.needFeed=true;document.getElementById('hw').style.display='block';
+      setTimeout(()=>{if(!S.sleeping)anim('hungry');},2100);
+      msg(HG[Math.floor(Math.random()*HG.length)],'w');
+    }
+    if(S.tillSleep<=0&&!S.sleeping)setTimeout(startSleep,500);
+    stats();S.busy=false;sb.disabled=false;
+    if(!S.needFeed&&!S.sleeping)setTimeout(idle,2200);
+  });
+}
+sb.addEventListener('click',go);
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!S.busy)go();});
+
+// ======= MENU =======
+let TAB='fruits';
+function renderMenu(){
+  const g=document.getElementById('fg');g.innerHTML='';
+  const isd=needsDrink();
+  Object.entries(F).forEach(([n,d])=>{
+    if(d.c!==TAB)return;
+    const ca=S.coins>=d.p;
+    const wt=S.needFeed&&((isd&&!d.d)||(!isd&&d.d&&S.needFeed&&isd));
+    const b=document.createElement('button');
+    b.className='fb'+(d.d?' dr':'');
+    b.disabled=!ca;
+    let lk='';if(!ca)lk='мало N';
+    b.innerHTML='<span class="fe">'+d.e+'</span><span class="fn">'+n+'</span><span class="fp">'+(d.d?'1N':'4N')+'</span>'+(lk?'<span class="fk">'+lk+'</span>':'');
+    b.onclick=()=>{inp.value=n;go();};
+    g.appendChild(b);
+  });
+}
+document.querySelectorAll('.tb').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tb').forEach(x=>x.classList.remove('act'));
+    b.classList.add('act');TAB=b.dataset.t;renderMenu();
+  });
+});
+
+// ======= PWA =======
+function makeIcon(sz){
+  const c=document.createElement('canvas');c.width=c.height=sz;
+  const x=c.getContext('2d');
+  x.fillStyle='#030a06';x.fillRect(0,0,sz,sz);
+  x.strokeStyle='#00ff88';x.lineWidth=sz*.04;
+  x.strokeRect(sz*.06,sz*.06,sz*.88,sz*.88);
+  x.strokeStyle='#00ff88';x.lineWidth=sz*.05;x.shadowColor='#00ff88';x.shadowBlur=sz*.05;
+  const cx=sz/2,s=sz*.1;
+  x.beginPath();x.arc(cx,sz*.27,s*.85,0,Math.PI*2);x.stroke();
+  x.beginPath();x.moveTo(cx,sz*.37);x.lineTo(cx,sz*.64);x.stroke();
+  x.beginPath();x.moveTo(cx-s*1.3,sz*.47);x.lineTo(cx+s*1.3,sz*.47);x.stroke();
+  x.beginPath();x.moveTo(cx,sz*.64);x.lineTo(cx-s*1.1,sz*.84);x.stroke();
+  x.beginPath();x.moveTo(cx,sz*.64);x.lineTo(cx+s*1.1,sz*.84);x.stroke();
+  return c.toDataURL('image/png');
+}
+const i192=makeIcon(192),i512=makeIcon(512);
+const mf={name:'STICK-AI',short_name:'STICK-AI',start_url:'.',display:'standalone',
+  background_color:'#030a06',theme_color:'#030a06',
+  icons:[{src:i192,sizes:'192x192',type:'image/png'},{src:i512,sizes:'512x512',type:'image/png'}]};
+const mb=new Blob([JSON.stringify(mf)],{type:'application/json'});
+document.getElementById('mf').href=URL.createObjectURL(mb);
+
+// SW — не трогает API совсем
+if('serviceWorker' in navigator){
+  const sw=`self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('activate',e=>e.waitUntil(clients.claim()));
+self.addEventListener('fetch',e=>{
+  if(e.request.url.includes('groq.com'))return;
+  if(e.request.method!=='GET')return;
+});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});
+}
+
+let dp=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();dp=e;
+  const b=document.createElement('button');
+  b.textContent='[ УСТАНОВИТЬ ]';
+  b.style.cssText='position:fixed;bottom:12px;right:12px;background:#011a0b;border:1px solid #00ff88;color:#00ff88;font-family:Courier New,monospace;font-size:10px;padding:7px 12px;cursor:pointer;z-index:200;letter-spacing:2px;box-shadow:0 0 10px #005533;';
+  b.onclick=()=>{dp.prompt();dp.userChoice.then(()=>b.remove());};
+  document.body.appendChild(b);
+});
+
+// ======= INIT =======
+anim('idle');stats();renderMenu();setNet(true);
+msg('╔══════════════════════════════════╗','s');
+msg('║   STICK-AI v4.0 • NEUROCOIN      ║','s');
+msg('╚══════════════════════════════════╝','s');
+msg('>> Привет! Я стикмен. Задавай вопросы!','a');
+msg('>> Умный ИИ встроен и готов к работе!','s');
+msg('>> Каждые 30 сек = +1 нейрокоин.','s');
+msg('>> Еда=4N, напиток=1N. Цикл: еда→еда→напиток.','s');
+msg('>> После 2 вопросов корми. После 10 — сплю 1 мин.','s');
+msg('─'.repeat(38),'s');
+</script>
+</body>
+</html>
