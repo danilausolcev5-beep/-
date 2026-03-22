@@ -156,6 +156,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:50;
 #save-btn,#exit-btn{flex:1;background:transparent;font-family:'Courier New',monospace;font-size:10px;padding:5px;cursor:pointer;letter-spacing:1px;transition:all .15s}
 #save-btn{border:1px solid var(--d);color:var(--g)}
 #save-btn:hover{border-color:var(--g);background:#001a0a}
+#sleep-btn{border:1px solid #003355;color:#00aaff;flex:1;background:transparent;font-family:'Courier New',monospace;font-size:10px;padding:5px;cursor:pointer;letter-spacing:1px;transition:all .15s}
+#sleep-btn:hover{border-color:#00aaff;background:#001020}
+#sleep-btn:disabled{color:var(--d);cursor:not-allowed;border-color:#001508}
 #exit-btn{border:1px solid #330000;color:var(--r)}
 #exit-btn:hover{border-color:var(--r);background:#1a0000}
 .lot-slot{width:54px;height:54px;border:2px solid var(--d);background:#001508;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--g);font-family:'Courier New',monospace;text-shadow:0 0 10px var(--g);transition:all .2s}
@@ -235,6 +238,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:50;
       </div>
       <div id="btn-row">
         <button id="save-btn" onclick="saveGame();msg('>> [✓] Игра сохранена!','c')">СОХРАНИТЬ</button>
+        <button id="sleep-btn" onclick="manualSleep()">💤 СПАТЬ</button>
         <button id="exit-btn" onclick="saveGame();if(confirm('Сохранить и выйти?'))window.close()||history.back()">ВЫХОД</button>
       </div>
     </div>
@@ -1218,6 +1222,36 @@ newTask();
   btn.addEventListener('click',spin);
   updateLotStats();
 })();
+
+// ======= РУЧНОЙ СОН =======
+function manualSleep(){
+  if(S.sleeping){ msg('>> Уже сплю!','w'); return; }
+  const btn=document.getElementById('sleep-btn');
+  btn.disabled=true;
+  S.sleeping=true; S.sleepLeft=30; S.busy=true;
+  document.getElementById('inp').disabled=true;
+  document.getElementById('sb').disabled=true;
+  document.getElementById('slp').style.display='block';
+  anim('sleeping');
+  msg('>> [💤] Ложусь поспать на 30 секунд...','s');
+  stats();
+  const t=setInterval(()=>{
+    S.sleepLeft--;
+    const m=Math.floor(S.sleepLeft/60),sc=(S.sleepLeft%60).toString().padStart(2,'0');
+    document.getElementById('stmr').textContent=m+':'+sc;
+    if(S.sleepLeft<=0){
+      clearInterval(t);
+      S.sleeping=false; S.tillSleep=10; S.tired=0; S.busy=false;
+      document.getElementById('inp').disabled=false;
+      document.getElementById('sb').disabled=false;
+      document.getElementById('slp').style.display='none';
+      btn.disabled=false;
+      idle();
+      msg('>> [!] Отдохнул! Энергия восстановлена.','w');
+      stats();
+    }
+  },1000);
+}
 
 anim('idle');stats();renderMenu();setNet(true);
 msg('╔══════════════════════════════════╗','s');
