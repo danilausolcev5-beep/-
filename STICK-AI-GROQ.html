@@ -152,7 +152,19 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:50;
 #ksk{border-color:var(--d);color:var(--d)}
 
 /* MOBILE */
-@media(max-width:560px){
+#btn-row{display:flex;gap:6px;margin-top:8px}
+#save-btn,#exit-btn{flex:1;background:transparent;font-family:'Courier New',monospace;font-size:10px;padding:5px;cursor:pointer;letter-spacing:1px;transition:all .15s}
+#save-btn{border:1px solid var(--d);color:var(--g)}
+#save-btn:hover{border-color:var(--g);background:#001a0a}
+#exit-btn{border:1px solid #330000;color:var(--r)}
+#exit-btn:hover{border-color:var(--r);background:#1a0000}
+.lot-slot{width:54px;height:54px;border:2px solid var(--d);background:#001508;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--g);font-family:'Courier New',monospace;text-shadow:0 0 10px var(--g);transition:all .2s}
+.lot-slot.spin{animation:lotSpin .1s step-end infinite}
+.lot-slot.win{border-color:var(--gold);color:var(--gold);text-shadow:0 0 16px var(--gold);background:#111500}
+@keyframes lotSpin{0%{opacity:1}50%{opacity:.3}100%{opacity:1}}
+#lot-btn{background:transparent;border:1px solid var(--d);color:var(--g);font-family:'Courier New',monospace;font-size:12px;padding:8px 20px;cursor:pointer;letter-spacing:2px;transition:all .2s}
+#lot-btn:hover:not(:disabled){border-color:var(--g);background:#001a0a;box-shadow:0 0 10px var(--d)}
+#lot-btn:disabled{color:var(--d);cursor:not-allowed;border-color:#001508}
   #wrap{flex-direction:column}
   #lp{flex:none;width:100%;flex-direction:row;flex-wrap:wrap}
   #lp .p{flex:1;min-width:140px}
@@ -198,9 +210,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:50;
         <div class="cr"><span>ДО ЕДЫ</span><span class="cv" id="cf">2</span></div>
         <div class="cr"><span>ДО СНА</span><span class="cv" id="cs">10</span></div>
         <div class="cr"><span>СТАТУС</span><span class="cv" id="cst">АКТИВЕН</span></div>
+        <div class="cr"><span>ЖАЖДА</span><span class="cv" id="cthirst">ОК</span></div>
         <div class="cr"><span>ВРЕМЯ</span><span class="cv" id="ptime">0м 0с</span></div>
       </div>
-      <div id="mr">приём <span id="mn">1</span>/3 — <span id="mt">ЕДА</span></div>
+      <div id="mr">шаг <span id="mn">1</span>/2 — <span id="mt">ЕДА</span></div>
     </div>
     <div class="p" id="slp">
       <div id="stmr">1:00</div>
@@ -219,6 +232,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:50;
         <span id="px">&gt;_</span>
         <input id="inp" type="text" placeholder="вопрос, еда, напиток..." autocomplete="off" autocorrect="off" spellcheck="false">
         <button id="sb">ВВОД</button>
+      </div>
+      <div id="btn-row">
+        <button id="save-btn" onclick="saveGame();msg('>> [✓] Игра сохранена!','c')">СОХРАНИТЬ</button>
+        <button id="exit-btn" onclick="saveGame();if(confirm('Сохранить и выйти?'))window.close()||history.back()">ВЫХОД</button>
       </div>
     </div>
   </div>
@@ -239,6 +256,62 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:50;
   </div>
 </div>
 
+<div id="work-section" style="width:100%;max-width:900px;margin-top:10px">
+  <div class="p" data-l="// РАБОТА — МЕНЕДЖЕР //">
+    <div id="work-desc" style="font-size:10px;color:var(--d);margin-bottom:8px">
+      Реши пример — получи 1 или 2 нейрокоина (50/50)
+    </div>
+    <div id="work-task" style="font-size:18px;color:var(--g);text-align:center;letter-spacing:3px;margin-bottom:10px;text-shadow:0 0 8px var(--g)">
+      ?? × ?? = ?
+    </div>
+    <div id="work-row" style="display:flex;gap:6px;align-items:center">
+      <input id="work-inp" type="number" placeholder="ответ..." style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--d);color:var(--w);font-family:'Courier New',monospace;font-size:14px;outline:none;padding:5px 3px;caret-color:var(--g)">
+      <button id="work-btn" style="background:transparent;border:1px solid var(--d);color:var(--g);font-family:'Courier New',monospace;font-size:10px;padding:5px 12px;cursor:pointer;letter-spacing:1px">ОТВЕТИТЬ</button>
+      <button id="work-skip" style="background:transparent;border:1px solid #330000;color:var(--r);font-family:'Courier New',monospace;font-size:10px;padding:5px 10px;cursor:pointer;letter-spacing:1px">ПРОПУСТИТЬ</button>
+    </div>
+    <div id="work-result" style="font-size:11px;text-align:center;margin-top:6px;height:16px"></div>
+    <div id="work-stats" style="font-size:9px;color:var(--d);margin-top:6px;display:flex;justify-content:space-between">
+      <span>РЕШЕНО: <span id="ws-solved" style="color:var(--g)">0</span></span>
+      <span>ПРАВИЛЬНО: <span id="ws-correct" style="color:var(--g)">0</span></span>
+      <span>ЗАРАБОТАНО: <span id="ws-earned" style="color:var(--gold)">0 N</span></span>
+    </div>
+  </div>
+</div>
+
+<div id="game-section" style="width:100%;max-width:900px;margin-top:10px">
+  <div class="p" data-l="// МИНИ-ИГРА — СТИКМЕН-БЕГУН //">
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--d);margin-bottom:6px">
+      <span>СЧЁТ: <span id="g-score" style="color:var(--g)">0</span></span>
+      <span>РЕКОРД: <span id="g-best" style="color:var(--gold)">0</span></span>
+      <span style="color:var(--d)" id="g-hint">[ ПРОБЕЛ / ТАП — прыжок ]</span>
+    </div>
+    <canvas id="gc" style="width:100%;height:120px;display:block;background:#011a0b;border:1px solid var(--d);cursor:pointer"></canvas>
+    <div id="g-msg" style="text-align:center;font-size:11px;color:var(--r);height:18px;margin-top:5px"></div>
+  </div>
+</div>
+
+<div id="lottery-section" style="width:100%;max-width:900px;margin-top:10px;margin-bottom:20px">
+  <div class="p" data-l="// ЛОТЕРЕЯ — билет 5N, выигрыш 20N //">
+    <div style="font-size:9px;color:var(--d);margin-bottom:10px">
+      Три символа: <b style="color:var(--g)">/</b>, <b style="color:var(--g)">|</b>, <b style="color:var(--g)">\</b> — если все одинаковые, выигрываешь <b style="color:var(--gold)">20N</b>!
+    </div>
+    <div id="lot-slots" style="display:flex;gap:10px;justify-content:center;margin-bottom:12px">
+      <div class="lot-slot">?</div>
+      <div class="lot-slot">?</div>
+      <div class="lot-slot">?</div>
+    </div>
+    <div style="text-align:center;margin-bottom:8px">
+      <button id="lot-btn">🎰 КУПИТЬ БИЛЕТ [ 5N ]</button>
+    </div>
+    <div id="lot-result" style="text-align:center;font-size:12px;height:18px;letter-spacing:1px"></div>
+    <div style="font-size:9px;color:var(--d);margin-top:8px;display:flex;justify-content:space-between">
+      <span>БИЛЕТОВ: <span id="lot-total" style="color:var(--g)">0</span></span>
+      <span>ПОБЕД: <span id="lot-wins" style="color:var(--gold)">0</span></span>
+      <span>БАЛАНС: <span id="lot-balance" style="color:var(--g)">0N</span></span>
+    </div>
+  </div>
+</div>
+
 <script>
 // ======= FRAMES =======
 const FR={
@@ -253,52 +326,52 @@ const FR={
 
 // ======= FOODS =======
 const F={
-  'банан':    {e:'[===D',m:'Ммм, банан! Энергия плюс калий!',r:100,p:40,c:'fruits'},
-  'яблоко':   {e:'(@)',  m:'Хрустящее яблоко. Круглое, как мой мозг.',r:100,p:40,c:'fruits'},
-  'арбуз':    {e:'(===)',m:'Арбуз! Зелёный снаружи, красный внутри.',r:100,p:40,c:'fruits'},
-  'апельсин': {e:'(@@@)',m:'Апельсин! Витамин C для ASCII-иммунитета.',r:100,p:40,c:'fruits'},
-  'манго':    {e:'(>o<)',m:'Манго — экзотика для терминального существа!',r:100,p:40,c:'fruits'},
-  'виноград': {e:'(ooo)',m:'Виноград! Маленький, но их много — уважаю.',r:100,p:40,c:'fruits'},
-  'лимон':    {e:'(>_<)',m:'КИСЛО!! Зато бодрит похлеще кофе.',r:100,p:40,c:'fruits'},
-  'дыня':     {e:'(~~~)',m:'Дыня! Жёлтая, сладкая, летняя.',r:100,p:40,c:'fruits'},
-  'стейк':    {e:'[###]',m:'МЯСО!! Стикмен счастлив на 146%.',r:100,p:40,c:'meat'},
-  'бургер':   {e:'[o#o]',m:'БУРГЕР!! Лучший день в жизни из точек!',r:100,p:40,c:'meat'},
-  'пельмени': {e:'(o)(o)',m:'ПЕЛЬМЕНИ! Сибирское счастье в тесте.',r:100,p:40,c:'meat'},
-  'шашлык':   {e:'-o-o->',m:'Шашлык! Дым, огонь, мясо — ликую.',r:100,p:40,c:'meat'},
-  'курица':   {e:'(>v<)',m:'Курица! Хрустящая корочка — огонь.',r:100,p:40,c:'meat'},
-  'рыба':     {e:'><>',  m:'Рыба! Омега-3 для ASCII-нейронов.',r:100,p:40,c:'meat'},
-  'борщ':     {e:'{#~#}',m:'Борщ! Красный, густой, настоящий.',r:100,p:40,c:'soups'},
-  'каша':     {e:'{~~~}',m:'Каша... неожиданно сытно.',r:100,p:40,c:'soups'},
-  'рис':      {e:'(....)',m:'Рис. Простой. Надёжный. Как я.',r:100,p:40,c:'soups'},
-  'картошка': {e:'(ooo)',m:'Картошка! Второй хлеб стикмена.',r:100,p:40,c:'soups'},
-  'гречка':   {e:'(###)',m:'Гречка! Русская суперсила в зёрнах.',r:100,p:40,c:'soups'},
-  'плов':     {e:'{.#.}',m:'Плов! Восточное волшебство.',r:100,p:40,c:'soups'},
-  'торт':     {e:'[^^^]',m:'ТОРТ!! Ты меня балуешь!',r:100,p:40,c:'sweet'},
-  'шоколад':  {e:'[####]',m:'Шоколад — топливо гениев и стикменов.',r:100,p:40,c:'sweet'},
-  'мороженое':{e:'(v)',  m:'Холодненько! Процессор охлаждается.',r:100,p:40,c:'sweet'},
-  'пончик':   {e:'(O)',  m:'Пончик! Круглый, как идеальная мысль.',r:100,p:40,c:'sweet'},
-  'зефир':    {e:'(~~)', m:'Зефир! Нежный, как облако.',r:100,p:40,c:'sweet'},
-  'пицца':    {e:'/\\__',m:'Пицца! Треугольная, как мои мысли.',r:100,p:40,c:'sweet'},
-  'суши':     {e:'[=][=]',m:'Суши... изысканно для ASCII-персонажа.',r:100,p:40,c:'other'},
-  'хлеб':     {e:'[___]',m:'Хлеб — основа основ.',r:100,p:40,c:'other'},
-  'сыр':      {e:'[ooo]',m:'Сыр с дырками! Как мой характер.',r:100,p:40,c:'other'},
-  'орехи':    {e:'(o)(o)',m:'Орехи! Питание для мозга.',r:100,p:40,c:'other'},
-  'яичница':  {e:'(o)(o)',m:'Яичница! Глаза на тарелке смотрят.',r:100,p:40,c:'other'},
-  'грибы':    {e:'(^)(^)',m:'Грибы! Загадочная еда из леса.',r:100,p:40,c:'other'},
+  'банан':    {e:'[===D',m:'Ммм, банан! Энергия плюс калий!',r:100,p:8,c:'fruits'},
+  'яблоко':   {e:'(@)',  m:'Хрустящее яблоко. Круглое, как мой мозг.',r:100,p:8,c:'fruits'},
+  'арбуз':    {e:'(===)',m:'Арбуз! Зелёный снаружи, красный внутри.',r:100,p:8,c:'fruits'},
+  'апельсин': {e:'(@@@)',m:'Апельсин! Витамин C для ASCII-иммунитета.',r:100,p:8,c:'fruits'},
+  'манго':    {e:'(>o<)',m:'Манго — экзотика для терминального существа!',r:100,p:8,c:'fruits'},
+  'виноград': {e:'(ooo)',m:'Виноград! Маленький, но их много — уважаю.',r:100,p:8,c:'fruits'},
+  'лимон':    {e:'(>_<)',m:'КИСЛО!! Зато бодрит похлеще кофе.',r:100,p:8,c:'fruits'},
+  'дыня':     {e:'(~~~)',m:'Дыня! Жёлтая, сладкая, летняя.',r:100,p:8,c:'fruits'},
+  'стейк':    {e:'[###]',m:'МЯСО!! Стикмен счастлив на 146%.',r:100,p:8,c:'meat'},
+  'бургер':   {e:'[o#o]',m:'БУРГЕР!! Лучший день в жизни из точек!',r:100,p:8,c:'meat'},
+  'пельмени': {e:'(o)(o)',m:'ПЕЛЬМЕНИ! Сибирское счастье в тесте.',r:100,p:8,c:'meat'},
+  'шашлык':   {e:'-o-o->',m:'Шашлык! Дым, огонь, мясо — ликую.',r:100,p:8,c:'meat'},
+  'курица':   {e:'(>v<)',m:'Курица! Хрустящая корочка — огонь.',r:100,p:8,c:'meat'},
+  'рыба':     {e:'><>',  m:'Рыба! Омега-3 для ASCII-нейронов.',r:100,p:8,c:'meat'},
+  'борщ':     {e:'{#~#}',m:'Борщ! Красный, густой, настоящий.',r:100,p:8,c:'soups'},
+  'каша':     {e:'{~~~}',m:'Каша... неожиданно сытно.',r:100,p:8,c:'soups'},
+  'рис':      {e:'(....)',m:'Рис. Простой. Надёжный. Как я.',r:100,p:8,c:'soups'},
+  'картошка': {e:'(ooo)',m:'Картошка! Второй хлеб стикмена.',r:100,p:8,c:'soups'},
+  'гречка':   {e:'(###)',m:'Гречка! Русская суперсила в зёрнах.',r:100,p:8,c:'soups'},
+  'плов':     {e:'{.#.}',m:'Плов! Восточное волшебство.',r:100,p:8,c:'soups'},
+  'торт':     {e:'[^^^]',m:'ТОРТ!! Ты меня балуешь!',r:100,p:8,c:'sweet'},
+  'шоколад':  {e:'[####]',m:'Шоколад — топливо гениев и стикменов.',r:100,p:8,c:'sweet'},
+  'мороженое':{e:'(v)',  m:'Холодненько! Процессор охлаждается.',r:100,p:8,c:'sweet'},
+  'пончик':   {e:'(O)',  m:'Пончик! Круглый, как идеальная мысль.',r:100,p:8,c:'sweet'},
+  'зефир':    {e:'(~~)', m:'Зефир! Нежный, как облако.',r:100,p:8,c:'sweet'},
+  'пицца':    {e:'/\\__',m:'Пицца! Треугольная, как мои мысли.',r:100,p:8,c:'sweet'},
+  'суши':     {e:'[=][=]',m:'Суши... изысканно для ASCII-персонажа.',r:100,p:8,c:'other'},
+  'хлеб':     {e:'[___]',m:'Хлеб — основа основ.',r:100,p:8,c:'other'},
+  'сыр':      {e:'[ooo]',m:'Сыр с дырками! Как мой характер.',r:100,p:8,c:'other'},
+  'орехи':    {e:'(o)(o)',m:'Орехи! Питание для мозга.',r:100,p:8,c:'other'},
+  'яичница':  {e:'(o)(o)',m:'Яичница! Глаза на тарелке смотрят.',r:100,p:8,c:'other'},
+  'грибы':    {e:'(^)(^)',m:'Грибы! Загадочная еда из леса.',r:100,p:8,c:'other'},
   // НАПИТКИ: 10 монет, restore 25 (нужно x4)
-  'кофе':     {e:'|_|~',m:'Кофе! Теперь отвечаю быстрее!',r:25,p:10,d:true,c:'drinks'},
-  'чай':      {e:'|~|', m:'Чай... Тепло. Уютно. Философски.',r:25,p:10,d:true,c:'drinks'},
-  'сок':      {e:'|===|',m:'Сок! Жидкий фрукт — интересная концепция.',r:25,p:10,d:true,c:'drinks'},
-  'вода':     {e:'|...|',m:'Вода. Чисто. Освежает.',r:25,p:10,d:true,c:'drinks'},
-  'лимонад':  {e:'|~*~|',m:'Лимонад! Пузырьки щекочут ASCII-нос.',r:25,p:10,d:true,c:'drinks'},
-  'компот':   {e:'|o~o|',m:'Компот! Детство в каждом глотке.',r:25,p:10,d:true,c:'drinks'},
-  'смузи':    {e:'|###|',m:'Смузи! Весь фруктовый сад в стакане.',r:25,p:10,d:true,c:'drinks'},
-  'какао':    {e:'|~~|', m:'Какао! Тёплое и шоколадное.',r:25,p:10,d:true,c:'drinks'},
-  'квас':     {e:'|^~^|',m:'Квас! Русский дух в каждом пузырьке.',r:25,p:10,d:true,c:'drinks'},
-  'энергетик':{e:'|!!!|',m:'ЭНЕРГЕТИК!! Я непобедим!',r:25,p:10,d:true,c:'drinks'},
+  'кофе':     {e:'|_|~',m:'Кофе! Теперь отвечаю быстрее!',r:25,p:2,d:true,c:'drinks'},
+  'чай':      {e:'|~|', m:'Чай... Тепло. Уютно. Философски.',r:25,p:2,d:true,c:'drinks'},
+  'сок':      {e:'|===|',m:'Сок! Жидкий фрукт — интересная концепция.',r:25,p:2,d:true,c:'drinks'},
+  'вода':     {e:'|...|',m:'Вода. Чисто. Освежает.',r:25,p:2,d:true,c:'drinks'},
+  'лимонад':  {e:'|~*~|',m:'Лимонад! Пузырьки щекочут ASCII-нос.',r:25,p:2,d:true,c:'drinks'},
+  'компот':   {e:'|o~o|',m:'Компот! Детство в каждом глотке.',r:25,p:2,d:true,c:'drinks'},
+  'смузи':    {e:'|###|',m:'Смузи! Весь фруктовый сад в стакане.',r:25,p:2,d:true,c:'drinks'},
+  'какао':    {e:'|~~|', m:'Какао! Тёплое и шоколадное.',r:25,p:2,d:true,c:'drinks'},
+  'квас':     {e:'|^~^|',m:'Квас! Русский дух в каждом пузырьке.',r:25,p:2,d:true,c:'drinks'},
+  'энергетик':{e:'|!!!|',m:'ЭНЕРГЕТИК!! Я непобедим!',r:25,p:2,d:true,c:'drinks'},
   // СПЕЦ ЕДА
-  'чудо стейк':{e:'[★##★]',m:'ЧУДО СТЕЙК!! Невероятная сила наполняет меня! 4 вопроса подряд!',r:100,p:80,special:'bonus_feed',c:'special'},
-  'чудо напиток':{e:'|★★★|',m:'ЧУДО НАПИТОК!! Я чувствую себя вечным! Не буду спать 30 запросов!',r:100,p:50,d:true,special:'no_sleep',c:'special'},
+  'чудо стейк':{e:'[★##★]',m:'ЧУДО СТЕЙК!! Невероятная сила наполняет меня! 4 вопроса подряд!',r:100,p:16,special:'bonus_feed',c:'special'},
+  'чудо напиток':{e:'|★★★|',m:'ЧУДО НАПИТОК!! Я чувствую себя вечным! Не буду спать 30 запросов!',r:100,p:35,d:true,special:'no_sleep',c:'special'},
 };
 
 // ======= ОФЛАЙН ИИ =======
@@ -416,7 +489,9 @@ function saveGame(){
     tillSleep:S.tillSleep, needFeed:S.needFeed,
     coins:S.coins, mealCount:S.mealCount,
     playtime:S.playtime, lastSave:Date.now(),
-    bonusFeed:S.bonusFeed, noSleepLeft:S.noSleepLeft
+    bonusFeed:S.bonusFeed, noSleepLeft:S.noSleepLeft,
+    mealStep:S.mealStep,
+    thirst:S.thirst, thirstDrinks:S.thirstDrinks
   };
   localStorage.setItem('sai_save',JSON.stringify(save));
 }
@@ -435,10 +510,13 @@ function loadGame(){
     S.playtime=save.playtime??0;
     S.bonusFeed=save.bonusFeed??0;
     S.noSleepLeft=save.noSleepLeft??0;
+    S.mealStep=save.mealStep??0;
+    S.thirst=save.thirst??0;
+    S.thirstDrinks=save.thirstDrinks??0;
     // Монеты за время пока не играл (1 монета за каждые 30 сек, макс 100)
     if(save.lastSave){
       const away=Math.floor((Date.now()-save.lastSave)/1000);
-      const earned=Math.min(Math.floor(away/30),100);
+      const earned=Math.min(Math.floor(away/30),100000);
       if(earned>0){
         S.coins+=earned;
         setTimeout(()=>msg('>> (+'+earned+' N) Заработано пока тебя не было!','c'),1000);
@@ -453,9 +531,12 @@ const S={
   sleeping:false,sleepLeft:0,needFeed:false,
   frame:0,anim:'idle',busy:false,
   coins:0,coinTimer:30,mealCount:0,
-  playtime:0, // секунды
-  bonusFeed:0,   // осталось бесплатных запросов от чудо стейка
-  noSleepLeft:0, // осталось запросов без сна от чудо напитка
+  playtime:0,
+  bonusFeed:0,
+  noSleepLeft:0,
+  mealStep:0,   // 0=нужна еда, 1=нужен напиток
+  thirst:0,     // 0=норма, 1=10 слов, 2=5 слов, 3=только просит пить
+  thirstDrinks:0, // сколько напитков выпито при thirst=3 (нужно 3)
 };
 let animT=null,sleepT=null;
 
@@ -512,13 +593,14 @@ function type(t,c,cb){
 }
 
 // ======= STATS =======
+// Новый цикл: каждый приём = 1 еда + 1 напиток
+// mealStep: 0 = нужна еда, 1 = нужен напиток
 function updMeal(){
-  const pos=(S.mealCount%3)+1;
-  const isd=(S.mealCount%3)===2;
-  document.getElementById('mn').textContent=pos;
+  const step=S.mealStep||0;
+  document.getElementById('mn').textContent=(step===0?'1':'2')+'/2';
   const mt=document.getElementById('mt');
-  mt.textContent=isd?'НАПИТОК':'ЕДА';
-  mt.style.color=isd?'var(--b)':'var(--a)';
+  mt.textContent=step===0?'ЕДА':'НАПИТОК';
+  mt.style.color=step===0?'var(--a)':'var(--b)';
 }
 function stats(){
   const h=Math.max(0,S.hunger);
@@ -531,8 +613,12 @@ function stats(){
   document.getElementById('eb').className='bf'+(e<=2?' low':e<=5?' mid':'');
   document.getElementById('ct').textContent=S.total;
   document.getElementById('cf').textContent=Math.max(0,2-S.afterFeed);
-  document.getElementById('cs').textContent=S.sleeping?'ZzZ':(S.noSleepLeft>0?'★'+S.tillSleep:S.tillSleep);
-  document.getElementById('cst').textContent=S.sleeping?'СПИТ':S.needFeed?'ГОЛОДЕН':(S.bonusFeed>0?'★БОН '+S.bonusFeed:'АКТИВЕН');
+  const tl=getTiredLevel();
+  document.getElementById('cs').textContent=S.sleeping?'ZzZ':(S.noSleepLeft>0?'★'+S.tillSleep:(tl===0?S.tillSleep:(tl===1?'😵'+S.tillSleep:(tl===2?'💀'+S.tillSleep:'ВЫРУБАЮСЬ'))));
+  document.getElementById('cst').textContent=S.sleeping?'СПИТ':S.needFeed?'ГОЛОДЕН':(S.bonusFeed>0?'★БОН '+S.bonusFeed:(tl===1?'КЛЮЁТ НОСОМ':(tl===2?'БРЕДИТ':'АКТИВЕН')));
+  const thirstLabels=['ОК','СУХО','ХРИПИТ','УМИРАЮ'];
+  const thirstEl=document.getElementById('cthirst');
+  if(thirstEl){ thirstEl.textContent=thirstLabels[S.thirst]||'ОК'; thirstEl.style.color=S.thirst===0?'var(--g)':S.thirst===1?'var(--a)':S.thirst===2?'var(--r)':'#ff0000'; }
   document.getElementById('cdsp').textContent='( N ) '+S.coins;
   updMeal();renderMenu();
 }
@@ -554,50 +640,153 @@ setInterval(()=>{
 },1000);
 
 // ======= FEED =======
-function needsDrink(){return(S.mealCount%3)===2;}
 function feed(name){
   const food=F[name];
   if(S.sleeping){msg('>> Он спит. Еда подождёт...','w');return;}
   if(S.coins<food.p){msg('>> Мало монет! Нужно '+food.p+', есть '+S.coins,'e');return;}
-  // Спецеда не подчиняется циклу питания
-  if(!food.special && S.needFeed&&needsDrink()&&!food.d){msg('>> Сейчас очередь напитка! (приём '+(S.mealCount%3+1)+'/3)','w');return;}
+
+  const step=S.mealStep||0;
+
+  // Спецеда — вне очереди
+  if(!food.special && S.needFeed){
+    if(step===0 && food.d){
+      msg('>> Сначала еда, потом напиток! (шаг 1/2)','w');return;
+    }
+    if(step===1 && !food.d){
+      msg('>> Уже поел — теперь нужен напиток! (шаг 2/2)','w');return;
+    }
+  }
+
+  // При thirst=3 нужно 3 напитка подряд чтобы выйти
+  if(S.thirst===3){
+    if(!food.d && !food.special){
+      msg('>> Пить хочу!!! Дай сначала 3 напитка!','e');return;
+    }
+    if(food.d){
+      S.coins-=food.p;
+      S.thirstDrinks++;
+      msg('>> '+food.e+' *жадно пьёт* ['+S.thirstDrinks+'/3] [-'+food.p+'N]','w');
+      if(S.thirstDrinks>=3){
+        S.thirst=0;S.thirstDrinks=0;
+        msg('>> Уффф... Напился. Теперь могу говорить нормально!','w');
+        stats();
+      } else {
+        msg('>> Ещё! Ещё давай! Осталось '+(3-S.thirstDrinks)+'!','w');
+        stats();
+      }
+      return;
+    }
+  }
+
   S.coins-=food.p;
   anim('eating',2000);
   setTimeout(()=>{
     S.hunger=Math.min(100,S.hunger+food.r);
-    if(!food.special) S.mealCount++;
-    if(S.hunger>=100){S.afterFeed=0;S.needFeed=false;document.getElementById('hw').style.display='none';}
+
+    if(!food.special){
+      if(step===0 && !food.d){
+        // Съел еду — теперь нужен напиток
+        S.mealStep=1;
+        msg('>> '+food.e+'  '+food.m+' [-'+food.p+'N]','w');
+        msg('>> Теперь нужен напиток! (шаг 2/2)','s');
+        stats();return;
+      }
+      if(step===1 && food.d){
+        // Выпил напиток в рамках приёма — жажда сбрасывается
+        S.mealStep=0;
+        S.afterFeed=0;
+        S.needFeed=false;
+        // Если пропускал напитки раньше — один пропуск снимается
+        if(S.thirst>0){ S.thirst=Math.max(0,S.thirst-1); msg('>> Хорошо попил! Жажда чуть отступила.','s'); }
+        document.getElementById('hw').style.display='none';
+        msg('>> '+food.e+'  '+food.m+' [-'+food.p+'N]','w');
+        msg('>> Приём пищи завершён!','s');
+        stats();return;
+      }
+    }
+
     // Спецэффекты
     if(food.special==='bonus_feed'){
       S.bonusFeed=4;
-      msg('>> ★ ЧУДО СТЕЙК! +4 бесплатных запроса! Текущий бонус: '+S.bonusFeed,'c');
+      msg('>> ★ ЧУДО СТЕЙК! +4 бесплатных запроса!','c');
     }
     if(food.special==='no_sleep'){
       S.noSleepLeft=30;
-      msg('>> ★ ЧУДО НАПИТОК! Не сплю 30 запросов! Осталось: '+S.noSleepLeft,'c');
+      msg('>> ★ ЧУДО НАПИТОК! Не сплю 30 запросов!','c');
+      // Чудо напиток тоже снимает один уровень жажды
+      if(S.thirst>0) S.thirst=Math.max(0,S.thirst-1);
+    }
+    if(S.hunger>=100&&!food.special){
+      S.afterFeed=0;S.needFeed=false;
+      document.getElementById('hw').style.display='none';
     }
     stats();
     msg('>> '+food.e+'  '+food.m+' [-'+food.p+'N]','w');
-    if(food.d&&!food.special&&S.hunger<100)msg('>> (нужно ещё '+Math.ceil((100-S.hunger)/food.r)+' напитка)','s');
   },300);
 }
 
 // ======= SLEEP =======
-function startSleep(){
-  S.sleeping=true;S.sleepLeft=60;S.busy=true;
+function startSleep(duration, reason){
+  S.sleeping=true;
+  S.sleepLeft=duration||60;
+  S.tired=0; // сбрасываем усталость после сна
+  S.busy=true;
   sb.disabled=true;inp.disabled=true;
   document.getElementById('slp').style.display='block';
-  anim('sleeping');msg('>> [ZzZ] Устал! Сплю 1 минуту...','e');stats();
+  anim('sleeping');
+  msg('>> [ZzZ] '+(reason||'Устал! Сплю 1 минуту...'),'e');
+  stats();
   sleepT=setInterval(()=>{
     S.sleepLeft--;
     const m=Math.floor(S.sleepLeft/60),s=(S.sleepLeft%60).toString().padStart(2,'0');
     document.getElementById('stmr').textContent=m+':'+s;
     if(S.sleepLeft<=0){clearInterval(sleepT);
-      S.sleeping=false;S.tillSleep=10;S.busy=false;
+      S.sleeping=false;S.tillSleep=10;S.tired=0;S.busy=false;
       sb.disabled=false;inp.disabled=false;
       document.getElementById('slp').style.display='none';
-      idle();msg('>> [!] Проснулся! Готов к работе!','w');stats();}
+      idle();msg('>> [!] Проснулся отдохнувшим! Готов к работе!','w');stats();}
   },1000);
+}
+
+// ======= УСТАЛОСТЬ =======
+// tired: 0=норма, 1=10+ (неточности), 2=15+ (серьёзные ошибки), 3=20+ (принудительный сон)
+function getTiredLevel(){
+  const over = -S.tillSleep; // сколько запросов сверх лимита
+  if(over<0) return 0;
+  if(over<5) return 1;  // 10-14 запрос
+  if(over<10) return 2; // 15-19 запрос
+  return 3;             // 20+
+}
+
+// Добавляет "неточности" в текст — меняет пару слов на похожие нелепости
+function addTiredness1(text){
+  const typos=[['не','ну'],['это','эт'],['так','тк'],['все','всe'],['что','чт'],['очень','оченб'],['тебе','тебэ'],['можно','мозно'],['знаю','знаб'],['просто','прасто']];
+  let words=text.split(' ');
+  // меняем ~20% слов
+  words=words.map(w=>{
+    if(Math.random()<0.2){
+      const t=typos[Math.floor(Math.random()*typos.length)];
+      if(w.toLowerCase().includes(t[0])) return w.replace(new RegExp(t[0],'i'),t[1]);
+    }
+    return w;
+  });
+  return words.join(' ')+' ...zzz...';
+}
+
+// Перемешивает буквы внутри каждого слова (кроме первой и последней)
+function addTiredness2(text){
+  return text.split(' ').map(w=>{
+    if(w.length<=3) return w;
+    const mid=w.slice(1,-1).split('');
+    for(let i=mid.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[mid[i],mid[j]]=[mid[j],mid[i]];}
+    return w[0]+mid.join('')+w[w.length-1];
+  }).join(' ')+' ...ЗзЗ...';
+}
+
+function applyTiredness(text, level){
+  if(level===1) return addTiredness1(text);
+  if(level>=2) return addTiredness2(text);
+  return text;
 }
 
 // ======= GO =======
@@ -607,8 +796,46 @@ async function go(){
   const fk=Object.keys(F).find(k=>text.toLowerCase()===k);
   if(fk){msg('> '+text,'u');feed(fk);return;}
   if(S.needFeed){msg('> '+text,'u');msg(HG[Math.floor(Math.random()*HG.length)],'w');anim('hungry',1200);return;}
+
+  // Проверка жажды — thirst=3 только просит пить
+  if(S.thirst===3){
+    msg('> '+text,'u');
+    msg('>> П-пить... горло... дай пить... *хрипит* Нужно 3 напитка!','e');
+    anim('hungry',1500);return;
+  }
+
+  // Проверяем усталость
+  const tiredLvl=getTiredLevel();
+  if(tiredLvl===3){
+    msg('> '+text,'u');
+    msg('>> zzZZZ... слипаются глаза... не могу... zz...','e');
+    setTimeout(()=>startSleep(300,'ВЫРУБИЛСЯ! Принудительный сон 5 минут...'),500);
+    return;
+  }
+  if(tiredLvl===1 && S.tillSleep===0){
+    msg('>> [!] Устал, но продолжаю... буду немного путаться...','w');
+  }
+  if(tiredLvl===2 && S.tillSleep===-4){
+    msg('>> [!!] Очень устал! Слова путаются, мысли туманны...','e');
+  }
+
   msg('> '+text,'u');S.busy=true;sb.disabled=true;anim('thinking');
-  const ans=await askAI(text);
+  let ans=await askAI(text);
+
+  // Применяем эффект усталости к ответу
+  if(tiredLvl>0) ans=applyTiredness(ans, tiredLvl);
+
+  // Применяем эффект жажды — обрезаем ответ
+  if(S.thirst===1){
+    // Не выпил напиток 1 раз — обрезаем до 10 слов
+    const words=ans.split(' ');
+    if(words.length>10) ans=words.slice(0,10).join(' ')+' *кхм* ...сухо в горле...';
+  } else if(S.thirst===2){
+    // Не выпил 2 раза — только 5 слов
+    const words=ans.split(' ');
+    if(words.length>5) ans=words.slice(0,5).join(' ')+' *хрипит*...';
+  }
+
   anim('answering',2000);
   type(ans,'a',()=>{
     S.total++;S.tillSleep--;S.hunger=Math.max(0,S.hunger-20);
@@ -619,6 +846,13 @@ async function go(){
     } else {
       S.afterFeed++;
       if(S.afterFeed>=2){
+        // Если прошлый приём завершился без напитка — жажда растёт
+        if(S.mealStep===0 && S.thirst<3){
+          S.thirst++;
+          if(S.thirst===1) msg('>> Хм... что-то в горле пересохло. Надо бы попить...','w');
+          else if(S.thirst===2) msg('>> *кашляет* Второй раз без напитка! Горло как наждак...','e');
+          else if(S.thirst===3) msg('>> ВСЁ. Говорить не могу. ВОДЫ. Три напитка давай!!!','e');
+        }
         S.needFeed=true;document.getElementById('hw').style.display='block';
         setTimeout(()=>{if(!S.sleeping)anim('hungry');},2100);
         msg(HG[Math.floor(Math.random()*HG.length)],'w');
@@ -629,8 +863,13 @@ async function go(){
       S.noSleepLeft--;
       if(S.noSleepLeft===0) msg('>> Действие чудо напитка закончилось!','w');
     }
-    if(S.tillSleep<=0&&!S.sleeping&&S.noSleepLeft<=0) setTimeout(startSleep,500);
-    else if(S.tillSleep<=0&&S.noSleepLeft>0){ S.tillSleep=10; msg('>> ★ Чудо напиток не дал мне уснуть! Осталось: '+S.noSleepLeft,'c'); }
+    // Обычный сон только если не чудо напиток и tillSleep дошёл до 0 первый раз
+    if(S.tillSleep<=0&&!S.sleeping&&S.noSleepLeft<=0&&getTiredLevel()===0){
+      // tillSleep стал 0 — предупреждаем, но не спим ещё
+    } else if(S.tillSleep===0&&S.noSleepLeft>0){
+      S.tillSleep=-1; // продолжаем считать в минус
+      msg('>> ★ Чудо напиток не дал мне уснуть! Осталось: '+S.noSleepLeft,'c');
+    }
     stats();S.busy=false;sb.disabled=false;
     if(!S.needFeed&&!S.sleeping)setTimeout(idle,2200);
   });
@@ -714,7 +953,264 @@ window.addEventListener('beforeinstallprompt',e=>{
   document.body.appendChild(b);
 });
 
-// ======= INIT =======
+// ======= РАБОТА: МЕНЕДЖЕР =======
+const WS={solved:0,correct:0,earned:0,a:0,b:0,ans:0};
+
+function newTask(){
+  WS.a=Math.floor(Math.random()*90)+10; // 10-99
+  WS.b=Math.floor(Math.random()*90)+10;
+  WS.ans=WS.a*WS.b;
+  document.getElementById('work-task').textContent=WS.a+' × '+WS.b+' = ?';
+  document.getElementById('work-inp').value='';
+  document.getElementById('work-result').textContent='';
+  document.getElementById('work-inp').focus();
+}
+
+function checkWork(){
+  const val=parseInt(document.getElementById('work-inp').value);
+  if(isNaN(val)) return;
+  WS.solved++;
+  document.getElementById('ws-solved').textContent=WS.solved;
+  if(val===WS.ans){
+    WS.correct++;
+    const reward=Math.random()<0.5?2:1;
+    S.coins+=reward;
+    WS.earned+=reward;
+    document.getElementById('ws-correct').textContent=WS.correct;
+    document.getElementById('ws-earned').textContent=WS.earned+' N';
+    document.getElementById('work-result').textContent='✓ Верно! +'+reward+' N';
+    document.getElementById('work-result').style.color='var(--g)';
+    document.getElementById('cdsp').textContent='( N ) '+S.coins;
+    msg('>> [МЕНЕДЖЕР] Правильно! +'+reward+' нейрокоина. Итого: '+S.coins+' N','c');
+    saveGame();
+  } else {
+    document.getElementById('work-result').textContent='✗ Неверно. Правильный ответ: '+WS.ans;
+    document.getElementById('work-result').style.color='var(--r)';
+  }
+  setTimeout(newTask,1500);
+}
+
+document.getElementById('work-btn').addEventListener('click',checkWork);
+document.getElementById('work-inp').addEventListener('keydown',e=>{if(e.key==='Enter')checkWork();});
+document.getElementById('work-skip').addEventListener('click',()=>{
+  document.getElementById('work-result').textContent='Пропущено. Ответ был: '+WS.ans;
+  document.getElementById('work-result').style.color='var(--d)';
+  WS.solved++;
+  document.getElementById('ws-solved').textContent=WS.solved;
+  setTimeout(newTask,1000);
+});
+
+newTask();
+
+// ======= МИНИ-ИГРА: СТИКМЕН-БЕГУН =======
+(function(){
+  const canvas=document.getElementById('gc');
+  const ctx=canvas.getContext('2d');
+  const scoreEl=document.getElementById('g-score');
+  const bestEl=document.getElementById('g-best');
+  const msgEl=document.getElementById('g-msg');
+  const hintEl=document.getElementById('g-hint');
+
+  let W,H,ground;
+  let best=parseInt(localStorage.getItem('sai_best')||'0');
+  bestEl.textContent=best;
+
+  let stick,stools,score,gameOver,started,raf;
+  const SPEED=4;
+  const STOOL_MIN=200,STOOL_MAX=380;
+
+  function resize(){
+    W=canvas.offsetWidth;H=120;
+    canvas.width=W;canvas.height=H;
+    ground=H-26;
+  }
+
+  function init(){
+    resize();
+    stick={x:55,y:ground,vy:0,jumping:false,dead:false,legF:0,legT:0};
+    stools=[];score=0;gameOver=false;started=false;
+    spawnStool(W+60);
+    msgEl.textContent='';
+    hintEl.textContent='[ ПРОБЕЛ / ТАП — прыжок ]';
+    scoreEl.textContent='0';
+    draw();
+  }
+
+  function spawnStool(x){
+    const tall=Math.random()<0.38;
+    stools.push({x,w:20,h:tall?42:26});
+  }
+
+  function drawStick(x,y,dead,jumping,legF){
+    ctx.lineWidth=2;
+    if(dead){ctx.strokeStyle='#ff3355';ctx.shadowColor='#ff3355';}
+    else{ctx.strokeStyle='#00ff88';ctx.shadowColor='#00ff88';}
+    ctx.shadowBlur=5;
+    const cx=x+9;
+    ctx.beginPath();ctx.arc(cx,y-32,5,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,y-27);ctx.lineTo(cx,y-11);ctx.stroke();
+    if(dead){
+      ctx.beginPath();ctx.moveTo(cx-11,y-20);ctx.lineTo(cx+11,y-20);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(cx,y-11);ctx.lineTo(cx-9,y-1);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(cx,y-11);ctx.lineTo(cx+9,y-1);ctx.stroke();
+    } else if(jumping){
+      ctx.beginPath();ctx.moveTo(cx,y-22);ctx.lineTo(cx-10,y-30);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(cx,y-22);ctx.lineTo(cx+10,y-30);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(cx,y-11);ctx.lineTo(cx-7,y+1);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(cx,y-11);ctx.lineTo(cx+7,y+1);ctx.stroke();
+    } else {
+      ctx.beginPath();ctx.moveTo(cx-9,y-21);ctx.lineTo(cx+9,y-21);ctx.stroke();
+      if(legF<2){
+        ctx.beginPath();ctx.moveTo(cx,y-11);ctx.lineTo(cx-9,y);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(cx,y-11);ctx.lineTo(cx+4,y-3);ctx.stroke();
+      } else {
+        ctx.beginPath();ctx.moveTo(cx,y-11);ctx.lineTo(cx+9,y);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(cx,y-11);ctx.lineTo(cx-4,y-3);ctx.stroke();
+      }
+    }
+    ctx.shadowBlur=0;
+  }
+
+  function drawStool(x,y,w,h){
+    ctx.strokeStyle='#ffaa00';ctx.lineWidth=2;ctx.shadowColor='#ffaa00';ctx.shadowBlur=4;
+    ctx.strokeRect(x,y-h,w,4);
+    ctx.fillStyle='#ffaa00';
+    ctx.fillRect(x+2,y-h+4,3,h-4);
+    ctx.fillRect(x+w-5,y-h+4,3,h-4);
+    ctx.beginPath();ctx.moveTo(x+2,y-h/2);ctx.lineTo(x+w-2,y-h/2);ctx.stroke();
+    ctx.shadowBlur=0;
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='#003322';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,ground+1);ctx.lineTo(W,ground+1);ctx.stroke();
+    drawStick(stick.x,stick.y,stick.dead,stick.jumping,stick.legF);
+    for(const s of stools) drawStool(s.x,ground+1,s.w,s.h);
+    ctx.fillStyle='#003322';ctx.font='10px Courier New';
+    if(!started&&!gameOver){
+      ctx.fillStyle='#005533';
+      ctx.fillText('ТАП или ПРОБЕЛ — начать',W/2-85,H/2+4);
+    }
+    if(gameOver){
+      ctx.fillStyle='#ff3355';ctx.font='11px Courier New';
+      ctx.fillText('ТАП или ПРОБЕЛ — заново',W/2-90,H-6);
+    }
+  }
+
+  function loop(){
+    if(gameOver){draw();return;}
+    stick.vy+=0.55;stick.y+=stick.vy;
+    if(stick.y>=ground){stick.y=ground;stick.vy=0;stick.jumping=false;}
+    stick.legT++;if(stick.legT>7){stick.legT=0;stick.legF=(stick.legF+1)%4;}
+    for(const s of stools) s.x-=SPEED;
+    while(stools.length&&stools[0].x+stools[0].w<0){stools.shift();score++;scoreEl.textContent=score;}
+    const last=stools[stools.length-1];
+    if(!last||last.x<W-STOOL_MIN-Math.random()*(STOOL_MAX-STOOL_MIN)) spawnStool(W+10);
+    // Коллизия
+    for(const s of stools){
+      if(stick.x+13>s.x+2&&stick.x+5<s.x+s.w-2&&stick.y>ground-s.h+3){
+        stick.dead=true;gameOver=true;
+        if(score>best){best=score;localStorage.setItem('sai_best',best);bestEl.textContent=best;}
+        const msgs=['АЙ! Ты ударил палец об табуретку!','БОЛЬНО! Мизинец встретил табуретку!','БАЦ! Кто ставит табуретки посреди дороги?!','ОЙ! Стикмен споткнулся о табуретку!','ТАБУРЕТКА ПОБЕДИЛА! Счёт '+score+':0 не в пользу стикмена'];
+        msgEl.textContent=msgs[Math.floor(Math.random()*msgs.length)];
+        hintEl.textContent='Счёт: '+score+' | Рекорд: '+best;
+        draw();return;
+      }
+    }
+    draw();
+    raf=requestAnimationFrame(loop);
+  }
+
+  function handleJump(){
+    if(gameOver){init();return;}
+    if(!started){started=true;loop();return;}
+    if(!stick.jumping&&!stick.dead){stick.vy=-11;stick.jumping=true;}
+  }
+
+  canvas.addEventListener('click',handleJump);
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();handleJump();},{passive:false});
+  document.addEventListener('keydown',e=>{
+    if(e.code==='Space'){
+      const active=document.activeElement;
+      if(active===document.getElementById('inp')||active===document.getElementById('work-inp')) return;
+      e.preventDefault();handleJump();
+    }
+  });
+  window.addEventListener('resize',init);
+  init();
+})();
+
+// ======= ЛОТЕРЕЯ =======
+(function(){
+  const SYMS=['/',  '|',  '\\'];
+  const PRICE=5, WIN=20;
+  let lotTotal=0,lotWins=0;
+  const slots=document.querySelectorAll('.lot-slot');
+  const btn=document.getElementById('lot-btn');
+  const res=document.getElementById('lot-result');
+  const elTotal=document.getElementById('lot-total');
+  const elWins=document.getElementById('lot-wins');
+  const elBal=document.getElementById('lot-balance');
+
+  function updateLotStats(){
+    elTotal.textContent=lotTotal;
+    elWins.textContent=lotWins;
+    elBal.textContent=((lotWins*WIN)-(lotTotal*PRICE))+'N';
+  }
+
+  function spin(){
+    if(S.coins<PRICE){
+      res.textContent='Мало монет! Нужно '+PRICE+'N';
+      res.style.color='var(--r)';return;
+    }
+    S.coins-=PRICE;
+    document.getElementById('cdsp').textContent='( N ) '+S.coins;
+    btn.disabled=true;
+    res.textContent='';
+    lotTotal++;
+
+    // Анимация крутки
+    slots.forEach(s=>{s.classList.add('spin');s.classList.remove('win');});
+    let t=0;
+    const spinInt=setInterval(()=>{
+      slots.forEach(s=>s.textContent=SYMS[Math.floor(Math.random()*SYMS.length)]);
+      t++;
+      if(t>18) clearInterval(spinInt);
+    },80);
+
+    setTimeout(()=>{
+      // Финальный результат
+      const results=SYMS.map(()=>SYMS[Math.floor(Math.random()*SYMS.length)]);
+      slots.forEach((s,i)=>{
+        s.textContent=results[i];
+        s.classList.remove('spin');
+      });
+
+      const won=results[0]===results[1]&&results[1]===results[2];
+      if(won){
+        S.coins+=WIN;
+        lotWins++;
+        slots.forEach(s=>s.classList.add('win'));
+        document.getElementById('cdsp').textContent='( N ) '+S.coins;
+        res.textContent='🎉 ДЖЕКПОТ! +'+WIN+'N! Символ: '+results[0]+results[1]+results[2];
+        res.style.color='var(--gold)';
+        msg('>> [ЛОТЕРЕЯ] ДЖЕКПОТ! Выпало '+results.join('')+'! +'+WIN+' нейрокоинов!','c');
+        anim('happy',2000);
+      } else {
+        res.textContent='Не повезло... Выпало: '+results.join(' ')+' -'+PRICE+'N';
+        res.style.color='var(--r)';
+      }
+      updateLotStats();
+      saveGame();
+      btn.disabled=false;
+    },1600);
+  }
+
+  btn.addEventListener('click',spin);
+  updateLotStats();
+})();
+
 anim('idle');stats();renderMenu();setNet(true);
 msg('╔══════════════════════════════════╗','s');
 msg('║   STICK-AI v4.0 • NEUROCOIN      ║','s');
