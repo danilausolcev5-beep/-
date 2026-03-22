@@ -424,8 +424,15 @@ function localAI(q){
 
 // ======= HUNGRY =======
 const GROQ_KEY='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';
+const IS_HOSTED=location.protocol!=='file:';
 
 async function askAI(q){
+  // Если открыт как file:// — сразу офлайн (CORS заблокирует всё равно)
+  if(!IS_HOSTED){
+    setNet(false,'ОФЛАЙН (file://)');
+    await new Promise(r=>setTimeout(r,300+Math.random()*400));
+    return localAI(q);
+  }
   try{
     const ac=new AbortController();
     const t=setTimeout(()=>ac.abort(),20000);
@@ -447,25 +454,26 @@ async function askAI(q){
     clearTimeout(t);
     const d=await res.json();
     if(d.choices?.[0]?.message?.content){
-      setNet(true);
+      setNet(true,'ОНЛАЙН');
       return d.choices[0].message.content;
     }
-    msg('>> [ERR] '+(d.error?.message||'ошибка API'),'e');
-    setNet(false);
+    // API ответил но с ошибкой — не переключаем в офлайн, просто берём локальный ответ
+    if(d.error) msg('>> [ERR] '+d.error.message,'e');
     return localAI(q);
   }catch(e){
-    setNet(false);
+    // Реальная сетевая ошибка
+    setNet(false,'ОФЛАЙН');
     return localAI(q);
   }
 }
 
 
 // ======= NET STATUS =======
-function setNet(on){
+function setNet(on,label){
   document.getElementById('nd').className=on?'on':'';
-  document.getElementById('nt').textContent=on?'ОНЛАЙН':'ОФЛАЙН';
+  document.getElementById('nt').textContent=label||(on?'ОНЛАЙН':'ОФЛАЙН');
 }
-setNet(false);
+setNet(IS_HOSTED, IS_HOSTED?'ПРОВЕРКА...':'ОФЛАЙН (file://');
 
 // ======= HUNGRY =======
 const HG=[
@@ -881,7 +889,7 @@ inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!S.busy)go();});
 let TAB='fruits';
 function renderMenu(){
   const g=document.getElementById('fg');g.innerHTML='';
-  const isd=needsDrink();
+  const isd=(S.mealStep||0)===1; // шаг 1 = нужен напиток
   Object.entries(F).forEach(([n,d])=>{
     if(d.c!==TAB)return;
     const ca=S.coins>=d.p;
