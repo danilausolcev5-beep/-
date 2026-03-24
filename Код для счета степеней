@@ -1,0 +1,34 @@
+print("--- Калькулятор степеней (введите 'exit' для выхода) ---")
+
+while True:
+    try:
+        # Запрашиваем данные у пользователя
+        base_input = input("\nВведите число (основание): ")
+        if base_input.lower() == 'exit':
+            break
+            
+        exponent_input = input("Введите степень (показатель): ")
+        if exponent_input.lower() == 'exit':
+            break
+
+        # Преобразуем ввод в числа (float позволяет работать и с дробными)
+        base = float(base_input)
+        exponent = float(exponent_input)
+
+        # Вычисляем результат
+        result = base ** exponent
+
+        # Выводим красиво. Если результат целый — убираем .0 в конце
+        if result.is_integer():
+            print(f"Результат: {int(result)}")
+        else:
+            print(f"Результат: {result}")
+
+    except ValueError:
+        print("Ошибка: Пожалуйста, вводите только числа!")
+    except OverflowError:
+        print("Ошибка: Число слишком большое для вычисления.")
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
+
+print("Программа завершена. До связи!")
