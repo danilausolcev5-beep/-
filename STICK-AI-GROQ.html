@@ -539,13 +539,75 @@ function localAI(q){
 }
 
 // ======= HUNGRY =======
-const GROQ_KEY='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';
-const IS_HOSTED=location.protocol!=='file:';
+// ======= API КЛЮЧ =======
+let GROQ_KEY = localStorage.getItem('stick_groq_key') || '';
+const IS_HOSTED = location.protocol !== 'file:';
+
+function showKeyMenu() {
+  if (document.getElementById('key-menu')) return;
+  const m = document.createElement('div');
+  m.id = 'key-menu';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  m.innerHTML = `
+<div style="background:#011a0b;border:1px solid #00ff88;padding:22px;width:100%;max-width:400px;font-family:Courier New,monospace;box-shadow:0 0 30px #00ff8833">
+  <div style="color:#00ff88;font-size:14px;letter-spacing:3px;margin-bottom:8px">// API КЛЮЧ //</div>
+  <div style="color:#005533;font-size:10px;line-height:1.9;margin-bottom:14px">
+    Нужен бесплатный ключ Groq:<br>
+    <b style="color:#00ff88">1.</b> Включи VPN (Warp или Opera)<br>
+    <b style="color:#00ff88">2.</b> Зайди на <b style="color:#ffaa00">console.groq.com</b><br>
+    <b style="color:#00ff88">3.</b> Войди через Google<br>
+    <b style="color:#00ff88">4.</b> Нажми <b style="color:#ffaa00">API Keys → Create API Key</b><br>
+    <b style="color:#00ff88">5.</b> Скопируй ключ и вставь сюда<br>
+    <span style="color:#003322">Ключ хранится только в браузере. Groq бесплатный навсегда.</span>
+  </div>
+  <input id="key-inp" type="password" placeholder="gsk_..." autocomplete="off"
+    style="width:100%;background:#030a06;border:1px solid #005533;color:#ccffdd;
+    font-family:Courier New,monospace;font-size:11px;padding:8px;outline:none;
+    margin-bottom:10px;box-sizing:border-box">
+  <div id="key-cur" style="font-size:9px;color:#003322;margin-bottom:10px"></div>
+  <div style="display:flex;gap:8px">
+    <button id="key-save" style="flex:1;background:transparent;border:1px solid #00ff88;color:#00ff88;font-family:Courier New,monospace;font-size:11px;padding:7px;cursor:pointer;letter-spacing:1px">✓ СОХРАНИТЬ</button>
+    <button id="key-clear" style="flex:1;background:transparent;border:1px solid #ff3355;color:#ff3355;font-family:Courier New,monospace;font-size:11px;padding:7px;cursor:pointer;letter-spacing:1px">✕ УДАЛИТЬ КЛЮЧ</button>
+    <button id="key-skip" style="flex:1;background:transparent;border:1px solid #005533;color:#005533;font-family:Courier New,monospace;font-size:11px;padding:7px;cursor:pointer;letter-spacing:1px">БЕЗ КЛЮЧА</button>
+  </div>
+</div>`;
+  document.body.appendChild(m);
+
+  // Показать текущий ключ (маскированный)
+  const cur = document.getElementById('key-cur');
+  if (GROQ_KEY) cur.textContent = 'Текущий ключ: ' + GROQ_KEY.slice(0,8) + '...' + GROQ_KEY.slice(-4);
+  else cur.textContent = 'Ключ не задан — работает офлайн ИИ';
+
+  document.getElementById('key-save').onclick = () => {
+    const v = document.getElementById('key-inp').value.trim();
+    if (v) {
+      GROQ_KEY = v;
+      localStorage.setItem('stick_groq_key', v);
+      setNet(true, 'ОНЛАЙН');
+      msg('>> [KEY] Ключ сохранён! Умный режим ВКЛ.', 'w');
+    }
+    m.remove();
+  };
+  document.getElementById('key-clear').onclick = () => {
+    GROQ_KEY = '';
+    localStorage.removeItem('stick_groq_key');
+    setNet(false, 'ОФЛАЙН');
+    msg('>> [KEY] Ключ удалён. Работаю офлайн.', 's');
+    m.remove();
+  };
+  document.getElementById('key-skip').onclick = () => { m.remove(); };
+  document.getElementById('key-inp').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('key-save').click();
+  });
+}
 
 async function askAI(q){
-  // Если открыт как file:// — сразу офлайн (CORS заблокирует всё равно)
   if(!IS_HOSTED){
     setNet(false,'ОФЛАЙН (file://)');
+    await new Promise(r=>setTimeout(r,300+Math.random()*400));
+    return localAI(q);
+  }
+  if(!GROQ_KEY){
     await new Promise(r=>setTimeout(r,300+Math.random()*400));
     return localAI(q);
   }
@@ -573,11 +635,16 @@ async function askAI(q){
       setNet(true,'ОНЛАЙН');
       return d.choices[0].message.content;
     }
-    // API ответил но с ошибкой — не переключаем в офлайн, просто берём локальный ответ
-    if(d.error) msg('>> [ERR] '+d.error.message,'e');
+    if(d.error){
+      msg('>> [ERR] '+d.error.message,'e');
+      if(d.error.code==='invalid_api_key'){
+        GROQ_KEY=''; localStorage.removeItem('stick_groq_key');
+        msg('>> Неверный ключ. Нажми [КЛЮЧ] чтобы обновить.','e');
+        setNet(false,'ОФЛАЙН');
+      }
+    }
     return localAI(q);
   }catch(e){
-    // Реальная сетевая ошибка
     setNet(false,'ОФЛАЙН');
     return localAI(q);
   }
@@ -589,7 +656,17 @@ function setNet(on,label){
   document.getElementById('nd').className=on?'on':'';
   document.getElementById('nt').textContent=label||(on?'ОНЛАЙН':'ОФЛАЙН');
 }
-setNet(IS_HOSTED, IS_HOSTED?'ПРОВЕРКА...':'ОФЛАЙН (file://');
+setNet(!!GROQ_KEY && IS_HOSTED, GROQ_KEY&&IS_HOSTED?'ОНЛАЙН':'ОФЛАЙН');
+// Кнопка ключа в панели сети
+function addKeyBtn(){
+  const b=document.createElement('span');
+  b.textContent='[КЛЮЧ]';
+  b.style.cssText='float:right;cursor:pointer;color:var(--d);font-size:8px;letter-spacing:1px';
+  b.onmouseenter=()=>b.style.color='var(--g)';
+  b.onmouseleave=()=>b.style.color='var(--d)';
+  b.onclick=showKeyMenu;
+  document.getElementById('net').appendChild(b);
+}
 
 // ======= HUNGRY =======
 const HG=[
@@ -1356,7 +1433,9 @@ function manualSleep(){
   },1000);
 }
 
-anim('idle');stats();renderMenu();setNet(true);
+anim('idle');stats();renderMenu();setNet(!!GROQ_KEY&&IS_HOSTED);
+addKeyBtn();
+if(!GROQ_KEY && IS_HOSTED) setTimeout(showKeyMenu, 800);
 msg('╔══════════════════════════════════╗','s');
 msg('║   STICK-AI v4.0 • NEUROCOIN      ║','s');
 msg('╚══════════════════════════════════╝','s');
